@@ -1,0 +1,35 @@
+<% layout('layouts/boilerplate') %>
+
+<section class="dashboard-page">
+  <span class="eyebrow">INSIGHTS</span>
+  <h1>Analytics</h1>
+
+  <div class="analytics-grid">
+    <div class="sidebar-card">
+      <h3 class="section-label">Issues by Category</h3>
+      <% byCategory.forEach(c => { %>
+        <div class="bar-row">
+          <span class="bar-label"><%= c._id.replace('_',' ') %></span>
+          <div class="bar-track"><div class="bar-fill" style="width: <%= Math.min(c.count * 10, 100) %>%"></div></div>
+          <span class="bar-count"><%= c.count %></span>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="sidebar-card">
+      <h3 class="section-label">Issues by Status</h3>
+      <% byStatus.forEach(s => { %>
+        <div class="bar-row">
+          <span class="bar-label"><%= s._id.replace('_',' ') %></span>
+          <div class="bar-track"><div class="bar-fill" style="width: <%= Math.min(s.count * 10, 100) %>%"></div></div>
+          <span class="bar-count"><%= s.count %></span>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="sidebar-card">
+      <h3 class="section-label">Avg. Resolution Time</h3>
+      <p class="big-stat"><%= avgResolutionHours.toFixed(1) %> hrs</p>
+    </div>
+  </div>
+</section>
