@@ -14,6 +14,8 @@ const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
 const issueRoutes = require("./routes/issueRoutes");
+const citizenRoutes = require("./routes/citizenRoutes");
+const staffRoutes = require("./routes/staffRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const { attachUserIfLoggedIn } = require("./middleware/auth");
 
@@ -57,6 +59,8 @@ app.use((req, res, next) => {
 // Routes
 app.get("/", (req, res) => res.render("home"));
 app.use("/", authRoutes);
+app.use("/", citizenRoutes);
+app.use("/staff", staffRoutes);
 app.use("/issues", issueRoutes);
 app.use("/admin", adminRoutes);
 

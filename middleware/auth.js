@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 
-// Verifies JWT token from cookie, attaches user to req and res.locals
 const isLoggedIn = async (req, res, next) => {
   const token = req.cookies.token;
 
@@ -21,6 +21,10 @@ const isLoggedIn = async (req, res, next) => {
 
     req.user = user;
     res.locals.currUser = user;
+    res.locals.unreadCount = await Notification.countDocuments({
+      user: user._id,
+      isRead: false,
+    });
     next();
   } catch (err) {
     req.flash("error", "Session expired, please login again");
@@ -28,10 +32,10 @@ const isLoggedIn = async (req, res, next) => {
   }
 };
 
-// Optional auth - attaches user if logged in, but doesn't block if not
 const attachUserIfLoggedIn = async (req, res, next) => {
   const token = req.cookies.token;
   res.locals.currUser = null;
+  res.locals.unreadCount = 0;
 
   if (token) {
     try {
@@ -40,6 +44,10 @@ const attachUserIfLoggedIn = async (req, res, next) => {
       if (user) {
         req.user = user;
         res.locals.currUser = user;
+        res.locals.unreadCount = await Notification.countDocuments({
+          user: user._id,
+          isRead: false,
+        });
       }
     } catch (err) {
       // invalid token, ignore silently

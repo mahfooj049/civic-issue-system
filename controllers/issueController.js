@@ -1,5 +1,7 @@
 const Issue = require("../models/Issue");
 const Department = require("../models/Department");
+const User = require("../models/User");
+const Notification = require("../models/Notification");
 const { findNearbyDuplicates } = require("../utils/duplicateDetection");
 const { classifyImage } = require("../utils/imageClassifier");
 
@@ -96,10 +98,31 @@ module.exports.createIssue = async (req, res) => {
       const slaHours = dept.slaHours || 72;
       newIssue.slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
     }
-
     newIssue.priority = calculatePriority(newIssue);
 
     await newIssue.save();
+
+    // Notify department staff about the new issue (non-blocking)
+    if (newIssue.assignedDept) {
+      try {
+        const deptStaff = await User.find({
+          role: "staff",
+          department: newIssue.assignedDept,
+        });
+        if (deptStaff.length > 0) {
+          await Notification.insertMany(
+            deptStaff.map((s) => ({
+              user: s._id,
+              issue: newIssue._id,
+              message: `New issue reported in your department: "${newIssue.title}"`,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to notify department staff:", err.message);
+      }
+    }
+
     req.flash("success", "Issue reported successfully!");
     res.redirect(`/issues/${newIssue._id}`);
   } catch (err) {
