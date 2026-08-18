@@ -70,7 +70,7 @@ module.exports.login = async (req, res) => {
     if (user.role === "admin" || user.role === "staff") {
       return res.redirect("/admin/dashboard");
     }
-    res.redirect("/issues");
+    res.redirect("/");
   } catch (err) {
     console.error(err);
     req.flash("error", "Something went wrong during login");
