@@ -17,6 +17,7 @@ const issueRoutes = require("./routes/issueRoutes");
 const citizenRoutes = require("./routes/citizenRoutes");
 const staffRoutes = require("./routes/staffRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const infoRoutes = require("./routes/info");
 const { attachUserIfLoggedIn } = require("./middleware/auth");
 
 const app = express();
@@ -60,6 +61,8 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => res.render("home"));
 app.use("/", authRoutes);
 app.use("/", citizenRoutes);
+app.use("/", infoRoutes);
+
 app.use("/staff", staffRoutes);
 app.use("/issues", issueRoutes);
 app.use("/admin", adminRoutes);
