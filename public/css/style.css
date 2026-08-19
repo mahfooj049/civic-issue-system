@@ -17,18 +17,18 @@
    ========================================================= */
 
 :root {
-  --primary: #e85d04;
-  --primary-dark: #c94d03;
+  --primary: #0f766e;
+  --primary-dark: #0ea5a4;
   --primary-light: #fff0e6;
 
   --navy: #14213d;
   --navy-light: #1d3155;
 
-  --background: #f7f5f0;
+  --background: #f8fafc;
   --surface: #ffffff;
   --surface-soft: #faf9f6;
 
-  --text: #14213d;
+  --text: #1e293b;
   --text-secondary: #566174;
   --text-muted: #8a93a3;
 
@@ -44,7 +44,7 @@
   --info: #3b6ea5;
   --info-bg: #e3eef9;
 
-  --danger: #b3261e;
+  --danger: #dc2626;
   --danger-bg: #fbe9e7;
 
   --white: #ffffff;
@@ -240,7 +240,7 @@ strong {
 
     background: #14213d;
 
-    border-bottom: 3px solid #e85d04;
+    border-bottom: 3px solid #14213d;
 
     z-index: 9999;
 
@@ -1387,7 +1387,7 @@ button:disabled,
    ========================================================= */
 
 .issue-grid {
-  display: grid;
+  display: grid ;
 
   grid-template-columns:
     repeat(auto-fill, minmax(270px, 1fr));
@@ -2198,43 +2198,6 @@ button:disabled,
   color: var(--text-secondary);
 }
 
-
-/* =========================================================
-   28. FOOTER
-   ========================================================= */
-
-.footer {
-  margin-top: 3rem;
-
-  border-top: 1px solid var(--border);
-
-  background: var(--surface);
-}
-
-.footer-inner {
-  width: 100%;
-  max-width: var(--container);
-
-  margin: auto;
-
-  padding: 1.8rem 1.5rem;
-
-  color: var(--text-secondary);
-
-  font-size: 0.82rem;
-
-  text-align: center;
-}
-
-.footer-inner p {
-  margin: 0.25rem 0;
-}
-
-.footer-sub {
-  color: var(--text-muted);
-
-  font-size: 0.72rem;
-}
 
 
 /* =========================================================
@@ -3100,11 +3063,11 @@ select {
 .site-footer {
     margin-top: 4rem;
 
-    background: #14213d;
+    background: #0ea5a4;
 
     color: #dfe5ee;
 
-    border-top: 4px solid #e85d04;
+    border-top: 4px solid #242220;
 }
 
 
@@ -3162,26 +3125,7 @@ select {
     color: #ffffff;
 }
 
-.footer-logo-mark {
-    width: 40px;
-    height: 40px;
 
-    display: grid;
-
-    place-items: center;
-
-    border-radius: 8px;
-
-    background: #e85d04;
-
-    color: #ffffff;
-
-    font-family: Arial, sans-serif;
-
-    font-size: 0.85rem;
-
-    font-weight: 800;
-}
 
 .footer-brand p {
     margin: 0;
@@ -3242,11 +3186,11 @@ select {
 
     margin-top: 60px;
 
-    background: #14213d;
+    background: #0f172a;
 
     color: #ffffff;
 
-    border-top: 3px solid #e85d04;
+    border-top: 3px solid #0f766e;
 
     position: relative;
 }
@@ -3317,7 +3261,7 @@ select {
     align-items: center;
     justify-content: center;
 
-    background: #e85d04;
+    background: #0ea5a4;
 
     border-radius: 9px;
 
@@ -3423,7 +3367,7 @@ select {
 }
 
 .footer-section a:hover {
-    color: #e85d04;
+    color: #7f1616;
 
     transform: translateX(3px);
 }
@@ -3444,7 +3388,7 @@ select {
 }
 
 .footer-feature span {
-    color: #e85d04;
+    color: red;
 
     font-size: 0.8rem;
 
@@ -3653,7 +3597,7 @@ select {
 .info-label {
     display: inline-block;
     margin-bottom: 10px;
-    color: #e85d04;
+    color: #393a3a;
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 1.5px;
@@ -3972,7 +3916,7 @@ select {
 .department-heading p {
     margin: 0;
 
-    color: #687386;
+    color: #676b72;
 
     font-size: 0.88rem;
 }
@@ -3999,7 +3943,7 @@ select {
 
     padding: 25px;
 
-    background: #ffffff;
+    background: #fff;
 
     border: 1px solid #e5e9ef;
 
@@ -4017,7 +3961,7 @@ select {
 .department-card:hover {
     transform: translateY(-5px);
 
-    border-color: #e85d04;
+    border-color: #0f766e;
 
     box-shadow:
         0 12px 30px rgba(20, 33, 61, 0.09);
@@ -4121,7 +4065,7 @@ select {
 }
 
 .contact-detail a {
-    color: #e85d04;
+    color: rgb(133, 36, 36);
 
     font-size: 0.78rem;
 
