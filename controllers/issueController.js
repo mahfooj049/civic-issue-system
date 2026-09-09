@@ -2,8 +2,15 @@ const Issue = require("../models/Issue");
 const Department = require("../models/Department");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
-const { findNearbyDuplicates } = require("../utils/duplicateDetection");
+
+
+const {
+  findNearbyDuplicates,
+  findNearbyImageDuplicates,
+} = require("../utils/duplicateDetection");
+
 const { classifyImage } = require("../utils/imageClassifier");
+const { generateImageHash } = require("../utils/imageHash");
 
 // GET all issues (map + list view)
 module.exports.index = async (req, res) => {
@@ -54,18 +61,117 @@ module.exports.createIssue = async (req, res) => {
       ],
     });
 
-    // AI: try image classification (non-blocking - if it fails, continue without it)
+    // AI: verify uploaded image using Python AI service
+    let aiResult = null;
+
+    console.log("New image hash exists:", !!newIssue.imageHash);
+    console.log("New image hash length:", newIssue.imageHash?.length);
+
     if (images.length > 0) {
       try {
-        const aiResult = await classifyImage(images[0].url);
+        aiResult = await classifyImage(images[0].url);
+
         if (aiResult) {
           newIssue.aiSuggestedCategory = aiResult.category;
           newIssue.aiConfidence = aiResult.confidence;
+
+          // AI verification result
+          newIssue.aiVerification = aiResult.status;
+          newIssue.aiIsCivic = aiResult.isCivic;
+          newIssue.aiRecommendation = aiResult.recommendation;
+
+          console.log("AI Verification Result:", aiResult);
         }
       } catch (err) {
-        console.log("AI classification skipped:", err.message);
+        console.log("AI verification skipped:", err.message);
       }
     }
+
+    // Generate perceptual image hash
+    if (images.length > 0) {
+      try {
+        const imageHash = await generateImageHash(images[0].url);
+
+        if (imageHash) {
+          newIssue.imageHash = imageHash;
+
+          console.log(
+            "Image hash generated:",
+            imageHash.substring(0, 32) + "..."
+          );
+        }
+      } catch (err) {
+        console.log("Image hash generation skipped:", err.message);
+      }
+    }
+    // Check for visually similar duplicate images
+    let imageDuplicates = [];
+
+    if (images.length > 0 && newIssue.imageHash) {
+      try {
+        console.log("New image hash exists:", true);
+        console.log(
+          "New image hash length:",
+          newIssue.imageHash.length
+        );
+
+        imageDuplicates = await findNearbyImageDuplicates(
+          parseFloat(lng),
+          parseFloat(lat),
+          category,
+          newIssue.imageHash
+        );
+
+        console.log(
+          "Image duplicate candidates found:",
+          imageDuplicates.length
+        );
+
+        if (imageDuplicates.length > 0) {
+          const duplicate = imageDuplicates[0];
+
+          console.log(
+            "Possible duplicate issue:",
+            duplicate.issue._id,
+            "| Hash distance:",
+            duplicate.hashDistance
+          );
+
+          // Mark this issue as a duplicate
+          newIssue.isDuplicate = true;
+
+          // Link to the original issue
+          newIssue.duplicateOf = duplicate.issue._id;
+
+          // Store why it was considered duplicate
+          newIssue.duplicateReason = "image";
+
+          console.log(
+            "Issue marked as IMAGE DUPLICATE of:",
+            duplicate.issue._id
+          );
+        } else {
+          console.log("No visually similar image found nearby.");
+        }
+      } catch (err) {
+        console.log(
+          "Image duplicate detection skipped:",
+          err.message
+        );
+      }
+    }
+
+    // Reject non-civic images
+    if (aiResult && aiResult.recommendation === "REJECT") {
+      req.flash(
+        "error",
+        "This image does not appear to show a civic issue. Please upload a relevant image."
+      );
+
+      return res.redirect("/issues/new");
+    }
+
+
 
     // Duplicate detection: check nearby issues (within 50m) of same category
     const duplicates = await findNearbyDuplicates(
@@ -88,11 +194,28 @@ module.exports.createIssue = async (req, res) => {
         "Similar issue already reported nearby! We've added your upvote to it instead."
       );
       await newIssue.save(); // still saved for record-keeping, but marked duplicate
+      console.log("========== SAVED ISSUE ==========");
+      console.log("Issue ID:", newIssue._id);
+      console.log("isDuplicate:", newIssue.isDuplicate);
+      console.log("duplicateOf:", newIssue.duplicateOf);
+      console.log("duplicateReason:", newIssue.duplicateReason);
+      console.log("=================================");
       return res.redirect(`/issues/${duplicates[0]._id}`);
     }
 
     // Auto-assign department based on category
     const dept = await Department.findOne({ categories: category });
+    console.log("========== DEPARTMENT ASSIGNMENT ==========");
+console.log("Issue category:", category);
+
+if (dept) {
+  console.log("Assigned department:", dept.name);
+  console.log("Department ID:", dept._id);
+  console.log("SLA hours:", dept.slaHours);
+} else {
+  console.log("No department found for category:", category);
+}
+console.log("============================================");
     if (dept) {
       newIssue.assignedDept = dept._id;
       const slaHours = dept.slaHours || 72;
@@ -123,7 +246,18 @@ module.exports.createIssue = async (req, res) => {
       }
     }
 
-    req.flash("success", "Issue reported successfully!");
+    if (newIssue.isDuplicate && newIssue.duplicateReason === "image") {
+      req.flash(
+        "success",
+        `Your report appears to be a duplicate of an existing issue (${newIssue.duplicateOf}). It has been linked to that issue.`
+      );
+    } else {
+      req.flash(
+        "success",
+        "Issue reported successfully!"
+      );
+    }
+
     res.redirect(`/issues/${newIssue._id}`);
   } catch (err) {
     console.error(err);
@@ -192,14 +326,62 @@ module.exports.deleteIssue = async (req, res) => {
 
 // Priority scoring: based on upvotes + category severity
 function calculatePriority(issue) {
-  const upvoteCount = issue.upvotes.length;
-  const severeCategories = ["water_leakage", "electricity", "road_damage"];
-  let base = severeCategories.includes(issue.category) ? 2 : 1;
+  let score = 0;
 
-  if (upvoteCount >= 10) base += 2;
-  else if (upvoteCount >= 5) base += 1;
+  const upvoteCount = issue.upvotes?.length || 0;
 
-  return Math.min(base, 3); // cap at 3 (high)
+  // 1. Category severity
+  const highSeverityCategories = [
+    "water_leakage",
+    "electricity",
+    "road_damage",
+    "drainage"
+  ];
+
+  const mediumSeverityCategories = [
+    "pothole",
+    "streetlight"
+  ];
+
+  if (highSeverityCategories.includes(issue.category)) {
+    score += 3;
+  } else if (mediumSeverityCategories.includes(issue.category)) {
+    score += 2;
+  } else {
+    score += 1;
+  }
+
+  // 2. Public demand based on upvotes
+  if (upvoteCount >= 10) {
+    score += 3;
+  } else if (upvoteCount >= 5) {
+    score += 2;
+  } else if (upvoteCount >= 2) {
+    score += 1;
+  }
+
+  // 3. AI verification confidence
+  if (issue.aiConfidence != null) {
+    if (issue.aiConfidence >= 0.90) {
+      score += 1;
+    }
+  }
+
+  // 4. Duplicate reports indicate multiple citizens
+  if (issue.isDuplicate) {
+    score += 1;
+  }
+
+  // Convert score into priority
+  if (score >= 6) {
+    return 3; // HIGH
+  }
+
+  if (score >= 3) {
+    return 2; // MEDIUM
+  }
+
+  return 1; // LOW
 }
 
 // GET logged-in user's complaints

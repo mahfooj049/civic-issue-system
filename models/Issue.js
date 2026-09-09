@@ -34,12 +34,32 @@ const issueSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    aiVerification: {
+      type: String,
+      enum: ["VALID", "NEEDS_REVIEW", "REJECTED"],
+      default: null,
+    },
+
+    aiIsCivic: {
+      type: Boolean,
+      default: null,
+    },
+
+    aiRecommendation: {
+      type: String,
+      enum: ["ACCEPT", "MANUAL_REVIEW", "REJECT"],
+      default: null,
+    },
     images: [
       {
         url: String,
         filename: String,
       },
     ],
+    imageHash: {
+      type: String,
+      default: null,
+    },
     location: {
       type: {
         type: String,
@@ -75,14 +95,19 @@ const issueSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    isDuplicate: {
-      type: Boolean,
-      default: false,
-    },
     duplicateOf: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Issue",
       default: null,
+    },
+    duplicateReason: {
+      type: String,
+      enum: ["image", "location", "both", null],
+      default: null,
+    },
+    isDuplicate: {
+      type: Boolean,
+      default: false,
     },
     assignedDept: {
       type: mongoose.Schema.Types.ObjectId,
@@ -103,6 +128,15 @@ const issueSchema = new mongoose.Schema(
       },
     ],
     slaDeadline: {
+      type: Date,
+      default: null,
+    },
+    escalated: {
+      type: Boolean,
+      default: false,
+    },
+
+    escalatedAt: {
       type: Date,
       default: null,
     },

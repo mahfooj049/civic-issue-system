@@ -20,6 +20,17 @@ const adminRoutes = require("./routes/adminRoutes");
 const infoRoutes = require("./routes/info");
 const { attachUserIfLoggedIn } = require("./middleware/auth");
 
+const { checkSLAAndEscalate } = require("./utils/slaChecker");
+// ===============================
+// SLA AUTO ESCALATION SCHEDULER
+// ===============================
+
+setInterval(async () => {
+  console.log("\nRunning SLA checker...");
+
+  await checkSLAAndEscalate();
+}, 5 * 60 * 1000);
+
 const app = express();
 
 // DB connection
