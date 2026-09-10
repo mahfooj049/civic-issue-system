@@ -456,5 +456,103 @@ module.exports.submitFeedback = async (req, res) => {
     res.redirect(`/issues/${req.params.id}`);
   }
 };
+// ========================================
+// RESOLVE ISSUE WITH PROOF
+// Staff/Admin only
+// ========================================
+
+module.exports.resolveIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      req.flash("error", "Issue not found.");
+      return res.redirect("/issues");
+    }
+
+    // Only staff and admin can resolve an issue
+    if (
+      req.user.role !== "staff" &&
+      req.user.role !== "admin"
+    ) {
+      req.flash(
+        "error",
+        "You are not authorized to resolve this issue."
+      );
+      return res.redirect(`/issues/${issue._id}`);
+    }
+
+    // Resolution image is required
+    if (!req.file) {
+      req.flash(
+        "error",
+        "Please upload a resolution image."
+      );
+      return res.redirect(`/issues/${issue._id}`);
+    }
+
+    // Staff can only resolve issues assigned to them
+    if (
+      req.user.role === "staff" &&
+      issue.assignedStaff &&
+      issue.assignedStaff.toString() !== req.user._id.toString()
+    ) {
+      req.flash(
+        "error",
+        "This issue is not assigned to you."
+      );
+      return res.redirect(`/issues/${issue._id}`);
+    }
+
+    // Save resolution proof
+    issue.resolutionImage = {
+      url: req.file.path,
+      filename: req.file.filename,
+    };
+
+    // Mark issue as resolved
+    issue.status = "resolved";
+    issue.resolvedAt = new Date();
+
+    // Add status history
+    issue.statusHistory.push({
+      status: "resolved",
+      timestamp: new Date(),
+      updatedBy: req.user._id,
+      note: "Issue resolved with resolution proof.",
+    });
+
+    await issue.save();
+
+    // Notify citizen
+    await Notification.create({
+      user: issue.reportedBy,
+      issue: issue._id,
+      message: `Your issue "${issue.title}" has been resolved. Please verify the resolution.`,
+      isRead: false,
+    });
+
+    req.flash(
+      "success",
+      "Issue resolved successfully with proof."
+    );
+
+    res.redirect(`/issues/${issue._id}`);
+  } catch (error) {
+    console.error(
+      "Resolve issue error:",
+      error.message
+    );
+
+    req.flash(
+      "error",
+      "Something went wrong while resolving the issue."
+    );
+
+    res.redirect(`/issues/${req.params.id}`);
+  }
+};
+
+
 
 module.exports.calculatePriority = calculatePriority;

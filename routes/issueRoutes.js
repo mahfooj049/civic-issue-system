@@ -49,6 +49,18 @@ router.get(
   issueController.myIssues
 );
 
+// ========================================
+// RESOLUTION PROOF
+// Staff/Admin only
+// ========================================
+
+router.post(
+  "/:id/resolve",
+  isLoggedIn,
+  upload.single("resolutionImage"),
+  issueController.resolveIssue
+);
+
 
 // ========================================
 // SINGLE ISSUE
