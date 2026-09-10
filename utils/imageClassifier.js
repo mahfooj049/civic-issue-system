@@ -46,8 +46,11 @@ async function classifyImage(imageUrl) {
 
     console.log("5. Sending image to Python AI service...");
 
+    const aiServiceUrl =
+      process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+
     const aiResponse = await fetch(
-      "http://127.0.0.1:8000/verify-image",
+      `${aiServiceUrl}/verify-image`,
       {
         method: "POST",
         body: formData,
